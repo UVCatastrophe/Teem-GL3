@@ -1,0 +1,12 @@
+To compile the examples, you will first need to install GLFW3, GLM, and Teem as well as a patched version of AntTweakBar (provided).
+
+To compile AntTweakBar for OSX, go to the src directory and type make -f Makefile.osx
+*Importat* on OSX, by default, executables will look for libAntTweakBar.dylib in ../lib/, this can be changed by modifying DYLD_PATH or my copying the folder in AntTweakBar/lib into the top level of this repository (recommended).
+
+To compile the examples, first open the Makefile. At the top there are three variables called ATB, GLM, and TEEM. These specify the paths to their respective libraries. Modify these paths so that they point to the correct place on your machine.
+
+Once this is done, save the makefile and then type Make. This should create 2 executables (polydemo and isorender).
+
+./polydemo takes no arguments
+./isorender takes the argument -i file
+where file is a .nrrd file which can be sampled in 3 dimensions
