@@ -1,7 +1,7 @@
 #include <AntTweakBar.h>
 
 #define GLM_FORCE_RADIANS
-#define GLFW_INCLUDE_GLU
+/* #define GLFW_INCLUDE_GLU */
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 
@@ -19,7 +19,7 @@
 #include <glm/glm.hpp>
 #include "glm/gtc/matrix_transform.hpp"
 #include <glm/gtc/type_ptr.hpp>
-#include <iostream> 
+#include <iostream>
 
 /*Dimenstions of the AntTweakBar pannel*/
 #define ATB_WIDTH 200
@@ -90,7 +90,7 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
 
 void update_view(){
   view = glm::lookAt(cam.pos,cam.center,cam.up);
-} 
+}
 
 void update_proj(){
   proj = glm::perspective(cam.fov, ((float) width)/((float)height),
@@ -105,7 +105,7 @@ void TWCB_Cam_Set(const void *value, void *clientData){
   cd_vec[1] = val_vec[1];
   cd_vec[2] = val_vec[2];
 
-  update_view(); 
+  update_view();
 }
 
 void TWCB_Cam_Get(void *value, void *clientData){
@@ -154,7 +154,7 @@ void TWCB_Spiral_Set(const void *value, void *clientData){
     if(clientData == &lpd_beta){
       std::cout << "Without Reallocation: ";
       buffStart = airTime();
-      buffer_data(lpd,false); 
+      buffer_data(lpd,false);
       buffTime = airTime();
       std::cout << buffTime-buffStart << std::endl;
     }
@@ -168,7 +168,7 @@ void TWCB_Spiral_Get(void *value, void *clientData){
   *(float *)value = *(float*)clientData;
 }
 
-void mouseButtonCB(GLFWwindow* w, int button, 
+void mouseButtonCB(GLFWwindow* w, int button,
 		   int action, int mods){
 
 
@@ -179,14 +179,14 @@ void mouseButtonCB(GLFWwindow* w, int button,
   if(ui.isDown == false){
     //Pass the event to ATB
     TwEventMouseButtonGLFW( button , action );
-    
+
     int pos[2];
     int tw_size[2];
     TwGetParam(bar, NULL, "position", TW_PARAM_INT32, 2, pos);
     TwGetParam(bar,NULL, "size", TW_PARAM_INT32, 2, tw_size);
 
     //If the event is on the ATB pannel, then return
-    if(pos[0] <= ui.last_x && pos[0] + tw_size[0] >= ui.last_x && 
+    if(pos[0] <= ui.last_x && pos[0] + tw_size[0] >= ui.last_x &&
        pos[1] <= ui.last_y && pos[1] + tw_size[1] >= ui.last_y)
       return;
   }
@@ -219,7 +219,7 @@ void rotate_diff(glm::vec3 diff){
 
   glm::vec3 norm = glm::cross(cam.center-cam.pos,glm::vec3(invV));
   float angle = (glm::length(diff) * 2*3.1415 ) / width;
-  
+
   //Create a rotation matrix around norm.
   glm::mat4 rot = glm::rotate(glm::mat4(),angle,norm);
   cam.pos = glm::vec3(rot * glm::vec4(cam.pos,0.0));
@@ -232,7 +232,7 @@ void rotate_diff(glm::vec3 diff){
 void translate_diff(glm::vec3 diff){
   glm::mat4 inv = glm::inverse(view);
   glm::vec4 invV = inv * glm::vec4(diff,0.0);
-  
+
   glm::mat4 trans = glm::translate(glm::mat4(),
 				   glm::vec3(invV)/(float)width);
   cam.center = glm::vec3(trans*glm::vec4(cam.center,1.0));
@@ -249,7 +249,7 @@ void mousePosCB(GLFWwindow* w, double x, double y){
 
   float x_diff = ui.last_x - x;
   float y_diff = ui.last_y - y;
-  
+
   //Standard (middle of the screen mode)
   if(ui.mode == 0){
 
@@ -264,7 +264,7 @@ void mousePosCB(GLFWwindow* w, double x, double y){
     }
 
   }
-  
+
   //Zooming Mode
   else if(ui.mode == 1){
 
@@ -408,7 +408,7 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
 
     rgba[3] = 255;
   }
-  
+
   return lpd;
 }
 
@@ -421,7 +421,7 @@ void render_poly(){
 
   //Light Direction Uniforms
   glUniform3fv(render.uniforms[3],1,glm::value_ptr(light_dir));
-  
+
   glClear(GL_DEPTH_BUFFER_BIT);
   glClear(GL_COLOR_BUFFER_BIT);
   int offset = 0;
@@ -430,15 +430,15 @@ void render_poly(){
   //Render all specified primatives
   for(int i = 0; i < poly->primNum; i++){
     GLuint prim = get_prim(poly->type[i]);
-    
-    glDrawElements( prim, poly->icnt[i], 
+
+    glDrawElements( prim, poly->icnt[i],
 		    GL_UNSIGNED_INT, ((void*) 0));
     offset += poly->icnt[i];
     GLuint error;
     if( (error = glGetError()) != GL_NO_ERROR)
       std::cout << "GLERROR: " << error << std::endl;
   }
-  
+
 }
 
 
@@ -454,7 +454,7 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
 
     glGenVertexArrays(1, &(render.vao));
     glGenBuffers(3,render.buffs);
-    
+
     glBindVertexArray(render.vao);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -467,7 +467,7 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
     glBufferData(GL_ARRAY_BUFFER, lpd->xyzwNum*sizeof(float)*4,
 		 lpd->xyzw, GL_DYNAMIC_DRAW);
   else//No change in number of vertices
-    glBufferSubData(GL_ARRAY_BUFFER, 0,  
+    glBufferSubData(GL_ARRAY_BUFFER, 0,
 		    lpd->xyzwNum*sizeof(float)*4,lpd->xyzw);
   glVertexAttribPointer(0, 4, GL_FLOAT,GL_FALSE,0, 0);
 
@@ -487,7 +487,7 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
     glBufferData(GL_ARRAY_BUFFER, lpd->rgbaNum*sizeof(char)*4,
 		 lpd->rgba, GL_DYNAMIC_DRAW);
   else
-    glBufferSubData(GL_ARRAY_BUFFER, 0, 
+    glBufferSubData(GL_ARRAY_BUFFER, 0,
 		    lpd->rgbaNum*sizeof(char)*4,lpd->rgba);
   glVertexAttribPointer(2, 4, GL_BYTE,GL_FALSE,0, 0);
 
@@ -495,7 +495,7 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
     //Indices
     glGenBuffers(1, &(render.elms));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.elms);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 		 lpd->indxNum * sizeof(unsigned int),
 		 lpd->indx, GL_DYNAMIC_DRAW);
   }
@@ -506,24 +506,24 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
  */
 void enable_shaders(const char* vshFile, const char* fshFile){
   //Initialize the shaders
-  render.shader = new ShaderProgram(); 
-  
+  render.shader = new ShaderProgram();
+
   //Set up the shader
   render.shader->vertexShader(vshFile);
   render.shader->fragmentShader(fshFile);
-  
+
   glBindAttribLocation(render.shader->progId,0, "position");
   glBindAttribLocation(render.shader->progId,1, "norm");
   glBindAttribLocation(render.shader->progId,2, "color");
-  
+
   glLinkProgram(render.shader->progId);
   glUseProgram(render.shader->progId);
-  
+
   render.uniforms[0] = render.shader->UniformLocation("proj");
   render.uniforms[1] = render.shader->UniformLocation("view");
   render.uniforms[2] = render.shader->UniformLocation("model");
   render.uniforms[3] = render.shader->UniformLocation("light_dir");
-  
+
 }
 
 //Initialize the ATB pannel.
@@ -535,49 +535,49 @@ void init_ATB(){
   bar = TwNewBar("lpdTweak");
 
   //size='ATB_WIDTH ATB_HEIGHT'
-  std::string s = std::string("lpdTweak size='") + std::to_string(ATB_WIDTH) + 
+  std::string s = std::string("lpdTweak size='") + std::to_string(ATB_WIDTH) +
     std::string(" ") + std::to_string(ATB_HEIGHT) + std::string("'");
   TwDefine(s.c_str());
 
   TwDefine(" lpdTweak resizable=true ");
 
   //position=top left corner
-  s = std::string("lpdTweak position='") + 
+  s = std::string("lpdTweak position='") +
     std::to_string((int)(width - ATB_WIDTH)) + std::string(" 0'");
   TwDefine(s.c_str());
 
-  TwAddVarCB(bar, "ALPHA", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get, 
+  TwAddVarCB(bar, "ALPHA", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get,
 	     &lpd_alpha, "min=0.0 step=.01 label=Alpha");
 
-  TwAddVarCB(bar, "BETA", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get, 
+  TwAddVarCB(bar, "BETA", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get,
 	     &lpd_beta, "min=0.0 step=.01 label=Beta");
 
-  TwAddVarCB(bar, "THETA", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get, 
+  TwAddVarCB(bar, "THETA", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get,
 	     &lpd_theta, "min=1.0 step=1 label=Theta");
 
-  TwAddVarCB(bar, "PHI", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get, 
+  TwAddVarCB(bar, "PHI", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get,
 	     &lpd_phi, "min=1.0 step=1 label=Phi");
 
-  TwAddVarRW(bar, "FixUP", TW_TYPE_BOOLCPP, &(cam.fixUp), 
+  TwAddVarRW(bar, "FixUP", TW_TYPE_BOOLCPP, &(cam.fixUp),
 	     " label='Fix Up Vector' group='Camera'");
 
-  TwAddVarCB(bar, "CamCenter", TW_TYPE_DIR3F,TWCB_Cam_Set, TWCB_Cam_Get, 
+  TwAddVarCB(bar, "CamCenter", TW_TYPE_DIR3F,TWCB_Cam_Set, TWCB_Cam_Get,
 	     glm::value_ptr(cam.center), "label='Center' group='Camera'");
 
-  TwAddVarCB(bar, "CamPos", TW_TYPE_DIR3F, TWCB_Cam_Set, TWCB_Cam_Get, 
+  TwAddVarCB(bar, "CamPos", TW_TYPE_DIR3F, TWCB_Cam_Set, TWCB_Cam_Get,
 	     glm::value_ptr(cam.pos), "label='Position' group='Camera'");
 
-  TwAddVarCB(bar, "CamUp", TW_TYPE_DIR3F, TWCB_Cam_Set, TWCB_Cam_Get, 
+  TwAddVarCB(bar, "CamUp", TW_TYPE_DIR3F, TWCB_Cam_Set, TWCB_Cam_Get,
 	     glm::value_ptr(cam.up),"label='Up Vector' group='Camera'");
 
-  TwAddVarRW(bar, "LightDir", TW_TYPE_DIR3F, 
+  TwAddVarRW(bar, "LightDir", TW_TYPE_DIR3F,
 	     glm::value_ptr(light_dir), "label='Light Direction'");
 
 }
 
 
 int main(int argc, const char **argv) {
-  
+
   glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // Use OpenGL Core v3.2
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -592,7 +592,7 @@ int main(int argc, const char **argv) {
   }
 
   glfwMakeContextCurrent(window);
-  
+
   init_ATB();
 
   enable_shaders("polydemo.vsh","polydemo.fsh");
