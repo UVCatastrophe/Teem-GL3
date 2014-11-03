@@ -121,6 +121,7 @@ bool ShaderProgram::geometryShader(const char* file){
   this->gshId = glCreateShader(GL_GEOMETRY_SHADER);
   this->shader_LoadFromFile(file,GL_GEOMETRY_SHADER,this->gshId);
   glAttachShader(this->progId,this->gshId);
+  return true;
 }
 
 //Taken from the CS237 library created by John Reppy
