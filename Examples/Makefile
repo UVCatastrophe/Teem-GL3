@@ -1,3 +1,4 @@
+# NOTE: Change these next three lines as needed
 TEEM = $(HOME)/teem-install
 GLM = /usr/local/include/glm
 ATB = ../AntTweakBar
@@ -20,11 +21,11 @@ SRC_ISORENDER = isorender.cpp shader.cpp
 
 all: polydemo isorender glkdemo
 
+glkdemo: glkdemo.cpp shader.cpp
+	$(CC) $^ -o $@
 polydemo: polydemo.cpp shader.cpp
 	$(CC) $^ -o $@
 isorender: isorender.cpp shader.cpp
-	$(CC) $^ -o $@
-glkdemo: glkdemo.cpp shader.cpp
 	$(CC) $^ -o $@
 
 clean:
