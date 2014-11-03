@@ -17,7 +17,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 /* Dimensions of the AntTweakBar panel*/
-int atbWidth = 300;
+int atbWidth = 200;
 int atbHeight = 300;
 
 GLFWwindow *theWindow = NULL;
@@ -559,8 +559,8 @@ void init_ATB(){
 
   bar = TwNewBar("lpdTweak");
 
-  s = ("lpdTweak size='" + std::to_string(atbWidth)
-       + " " + std::to_string(atbHeight) + "'");
+  s = ("lpdTweak size='" + std::to_string(ui.pixScale*atbWidth)
+       + " " + std::to_string(ui.pixScale*atbHeight) + "'");
   TwDefine(s.c_str());
 
   TwDefine("lpdTweak resizable=true");
