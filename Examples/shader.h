@@ -1,7 +1,6 @@
 #ifndef _SHADER_H_
 #define _SHADER_H_
 
-/* #define GLFW_INCLUDE_GLU */
 #define GL_GLEXT_PROTOTYPES
 
 #if defined(__APPLE_CC__)
