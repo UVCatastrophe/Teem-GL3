@@ -19,7 +19,7 @@ CC = g++ -std=c++11 $(OS_FLAGS) $(FLAGS) $(LIB) $(INCLUDE)
 
 SRC_ISORENDER = isorender.cpp shader.cpp
 
-all: polydemo isorender glkdemo
+all: glkdemo polydemo isorender
 
 glkdemo: glkdemo.cpp shader.cpp
 	$(CC) $^ -o $@
