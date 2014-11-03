@@ -3,9 +3,10 @@
 
 #if defined(__APPLE_CC__)
 #define GLFW_INCLUDE_GLCOREARB
+#else
+#define GL_GLEXT_PROTOTYPES
 #endif
 
-#define GL_GLEXT_PROTOTYPES
 #include <GLFW/glfw3.h>
 
 class ShaderProgram{

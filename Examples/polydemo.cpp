@@ -3,6 +3,8 @@
 #define GLM_FORCE_RADIANS
 #if defined(__APPLE_CC__)
 #define GLFW_INCLUDE_GLCOREARB
+#else
+#define GL_GLEXT_PROTOTYPES
 #endif
 
 #include <GLFW/glfw3.h>

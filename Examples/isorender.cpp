@@ -6,10 +6,11 @@
 
 #if defined(__APPLE_CC__)
 #include <OpenGL/glext.h>
+#else
+#define GL_GLEXT_PROTOTYPES
 #endif
 
 #define GLM_FORCE_RADIANS
-#define GL_GLEXT_PROTOTYPES
 #include <GLFW/glfw3.h>
 #include <teem/air.h>
 #include <teem/biff.h>
