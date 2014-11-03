@@ -655,7 +655,7 @@ main(int argc, const char **argv) {
 
   init_ATB();
 
-  enable_shaders("polydemo.vsh", "polydemo.fsh");
+  enable_shaders("glkdemo.vsh", "glkdemo.fsh");
 
   poly = generate_spiral(lpd_alpha, lpd_beta, lpd_theta, lpd_phi);
   buffer_data(poly,true);
