@@ -1,7 +1,6 @@
 #include "shader.h"
 #include <sys/stat.h>
 #include <cstring>
-
 #include <iostream>
 
 ShaderProgram::ShaderProgram(){

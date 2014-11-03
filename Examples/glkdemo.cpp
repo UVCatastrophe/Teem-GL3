@@ -2,8 +2,13 @@
 
 #include <AntTweakBar.h>
 
+#define GLFW_GLEXT_PROTOTYPES
 #define GLM_FORCE_RADIANS
+
+#if defined(__APPLE_CC__)
 #define GLFW_INCLUDE_GLCOREARB
+#endif
+
 #include <GLFW/glfw3.h>
 
 #include <teem/air.h>

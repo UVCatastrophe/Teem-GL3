@@ -1,12 +1,11 @@
 #ifndef _SHADER_H_
 #define _SHADER_H_
 
-#define GL_GLEXT_PROTOTYPES
-
 #if defined(__APPLE_CC__)
 #define GLFW_INCLUDE_GLCOREARB
 #endif
 
+#define GL_GLEXT_PROTOTYPES
 #include <GLFW/glfw3.h>
 
 class ShaderProgram{

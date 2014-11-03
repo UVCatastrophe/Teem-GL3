@@ -1,8 +1,10 @@
 #include <AntTweakBar.h>
 
 #define GLM_FORCE_RADIANS
-/* #define GLFW_INCLUDE_GLU */
+#if defined(__APPLE_CC__)
 #define GLFW_INCLUDE_GLCOREARB
+#endif
+
 #include <GLFW/glfw3.h>
 
 #if defined(__APPLE_CC__)

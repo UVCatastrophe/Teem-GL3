@@ -1,16 +1,16 @@
 #include <AntTweakBar.h>
 
-#define GLM_FORCE_RADIANS
-#define GLFW_GLEXT_PROTOTYPES
+#if defined(__APPLE_CC__)
 #define GLFW_INCLUDE_GLCOREARB
-#include <GLFW/glfw3.h>
+#endif
 
 #if defined(__APPLE_CC__)
 #include <OpenGL/glext.h>
-#else
-#  include <GL/glext.h>
 #endif
 
+#define GLM_FORCE_RADIANS
+#define GL_GLEXT_PROTOTYPES
+#include <GLFW/glfw3.h>
 #include <teem/air.h>
 #include <teem/biff.h>
 #include <teem/nrrd.h>
@@ -20,7 +20,20 @@
 #include <glm/glm.hpp>
 #include "glm/gtc/matrix_transform.hpp"
 #include <glm/gtc/type_ptr.hpp>
-#include <iostream> 
+#include <iostream>
+
+
+/*
+#include <teem/air.h>
+#include <teem/biff.h>
+#include <teem/nrrd.h>
+#include <teem/limn.h>
+#include <teem/seek.h>
+#include "shader.h"
+#include <glm/glm.hpp>
+#include "glm/gtc/matrix_transform.hpp"
+#include <glm/gtc/type_ptr.hpp>
+#include <iostream> */
 
 /*Dimenstions of the AntTweakBar pannel*/
 #define ATB_WIDTH 200
