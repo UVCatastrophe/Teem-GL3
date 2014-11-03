@@ -1,7 +1,6 @@
 #include <AntTweakBar.h>
 
 #define GLM_FORCE_RADIANS
-#define GLFW_INCLUDE_GLU
 #define GLFW_GLEXT_PROTOTYPES
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
@@ -563,27 +562,33 @@ void bind_external_buffer(){
 
 /*Coverts the TEEM enum for primiative types to OGL enum*/
 GLuint get_prim(unsigned char type){
+  GLuint ret;
   switch(type){
   case limnPrimitiveUnknown:
-    return 0;
   case limnPrimitiveNoop:
-    return 0;
-  case limnPrimitiveTriangles:
-    return GL_TRIANGLES;
-  case limnPrimitiveTriangleStrip:
-    return GL_TRIANGLE_STRIP;
-  case limnPrimitiveTriangleFan:
-    return GL_TRIANGLE_FAN;
-  case limnPrimitiveQuads:
-    return GL_QUADS;
-  case limnPrimitiveLineStrip:
-    return GL_LINE_STRIP;
-  case limnPrimitiveLines:
-    return GL_LINES;
   case limnPrimitiveLast:
-    return 0;
+    ret = 0;
+    break;
+  case limnPrimitiveTriangles:
+    ret = GL_TRIANGLES;
+    break;
+  case limnPrimitiveTriangleStrip:
+    ret = GL_TRIANGLE_STRIP;
+    break;
+  case limnPrimitiveTriangleFan:
+    ret = GL_TRIANGLE_FAN;
+    break;
+  case limnPrimitiveQuads:
+    ret = GL_QUADS;
+    break;
+  case limnPrimitiveLineStrip:
+    ret = GL_LINE_STRIP;
+    break;
+  case limnPrimitiveLines:
+    ret = GL_LINES;
+    break;
   }
-
+  return ret;
 }
 
 //Initializes the seek context
