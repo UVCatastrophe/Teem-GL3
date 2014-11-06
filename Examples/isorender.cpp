@@ -23,27 +23,17 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
-
-/*
-#include <teem/air.h>
-#include <teem/biff.h>
-#include <teem/nrrd.h>
-#include <teem/limn.h>
-#include <teem/seek.h>
-#include "shader.h"
-#include <glm/glm.hpp>
-#include "glm/gtc/matrix_transform.hpp"
-#include <glm/gtc/type_ptr.hpp>
-#include <iostream> */
-
 /*Dimenstions of the AntTweakBar pannel*/
 #define ATB_WIDTH 200
-#define ATB_HEIGHT 200
+#define ATB_HEIGHT 300
 
 /*Dimensions of the screen*/
 double height = 480;
 double width = 640;
 
+//GLFW Windows
+GLFWwindow *mainWindow;
+GLFWwindow *ATBWindow;
 
 //The Current Isovalue
 float isovalue = 0.5;
@@ -154,11 +144,42 @@ static void error_callback(int error, const char* description){
 
 /*-----Callbacks for AntTweakBar Events---------*/
 
+/*Also called by GLFW etc etc*/
+void TWCB_screenSize(GLFWwindow* win, int w, int h){
+  if(glfwGetCurrentContext() != ATBWindow)
+    glfwMakeContextCurrent(ATBWindow);
+  
+  TwWindowSize(w,h);
+}
+
+/*Called by glfw whenever the mouse button is pressed inside
+ * windowATB.
+ */
+void TWCB_mouseButton(GLFWwindow* w, int button,
+                      int action, int mods){
+  TwEventMouseButtonGLFW( button , action );
+  return;
+}
+
+/*Called by glfw whenever the mouse moves
+ * inside windowATV
+ */
+void TWCB_mousePos(GLFWwindow* w, double x, double y){
+      TwEventMousePosGLFW( (int)x, (int)y );
+}
+
+/*Called by glfw whenever a key is pressed...*/
+void TWCB_Key(GLFWwindow* w,int key,int scancode,int action,int mods){
+  //Pass to ATB
+  TwEventKeyGLFW( key , action );
+  TwEventCharGLFW( key  , action );
+}
 /* Takes a screenshot of the current image/depthbuffer and saves it as a png.
  * Uses the name given by barVals.fileOut 
  */
 void TWCB_take_screenshot(void* clientData){
- 
+  glfwMakeContextCurrent(mainWindow);
+  
   bind_external_buffer();
 
   glReadBuffer(GL_COLOR_ATTACHMENT0); 
@@ -181,7 +202,7 @@ void TWCB_take_screenshot(void* clientData){
 
 if (nrrdWrap_va(nflip, ss, nrrdTypeUChar, 3,
 		(size_t)3, (size_t)width, (size_t)height)
-    || nrrdFlip(nout,nflip, 2) ||  nrrdSave((barVals.fileOut + std::string(".png")).c_str(), nout, NULL)) {
+    || nrrdFlip(nout,nflip, 2) ||  nrrdSave((barVals.fileOut + std::string(".nrrd")).c_str(), nout, NULL)) {
       err = biffGetDone(NRRD);
       fprintf(stderr, "trouble wrapping image:\n%s", err);
       free(err);
@@ -369,26 +390,6 @@ void mouseButtonCB(GLFWwindow* w, int button,
   glfwGetCursorPos (w, &(ui.last_x), &(ui.last_y));
   ui.mouseButton = button;
 
-  //User is not currently rotating or zooming.
-  if(ui.isDown == false){
-    //Pass the event to ATB
-    TwEventMouseButtonGLFW( button , action );
-    
-    //Get the location of the ATB window
-    int pos[2];
-    int tw_size[2];
-    TwGetParam(bar, NULL, "position", TW_PARAM_INT32, 2, pos);
-    TwGetParam(bar,NULL, "size", TW_PARAM_INT32, 2, tw_size);
-
-    /*If the event is on the ATB pannel, then return
-     *This prevents the camera from zooming/rotating while trying to click on
-     *the ATB user interface
-     */
-    if(pos[0] <= ui.last_x && pos[0] + tw_size[0] >= ui.last_x && 
-       pos[1] <= ui.last_y && pos[1] + tw_size[1] >= ui.last_y)
-      return;
-  }
-
   /*On shift-click, cast a ray through the position that was clicked*/
   if(ui.shift_click && action == GLFW_PRESS){
     cast_ray(ui.last_x,ui.last_y);
@@ -420,9 +421,8 @@ void mouseButtonCB(GLFWwindow* w, int button,
 /*Called when the mouse moves*/
 void mousePosCB(GLFWwindow* w, double x, double y){
 
-  //If zooming/rotating is not occuring, just pass to ATB
+  //If zooming/rotating is not occuring
   if(!ui.isDown){
-    TwEventMousePosGLFW( (int)x, (int)y );
     return;
   }
 
@@ -521,9 +521,6 @@ void keyFunCB( GLFWwindow* window,int key,int scancode,int action,int mods)
     ui.shift_click = false;
   }
 
-  //Pass to ATB
-  TwEventKeyGLFW( key , action );
-  TwEventCharGLFW( key  , action );
 }
 
 void mouseScrollCB(  GLFWwindow* window, double x , double y )
@@ -705,6 +702,8 @@ void render_poly(){
  */
 void buffer_data(limnPolyData *lpd, bool buffer_new){
 
+  if(glfwGetCurrentContext() != mainWindow)
+    glfwMakeContextCurrent(mainWindow);
   //First Pass
 
   if(render.vao == -1){
@@ -801,9 +800,12 @@ void enable_shaders(const char* vshFile,
 
 //Initialize the ATB pannel.
 void init_ATB(){
+  
+  glfwMakeContextCurrent(ATBWindow);
+  
   TwInit(TW_OPENGL_CORE, NULL);
 
-  TwWindowSize(width,height);
+  TwWindowSize(ATB_WIDTH,ATB_HEIGHT);
 
   bar = TwNewBar("lpdTweak");
 
@@ -812,12 +814,9 @@ void init_ATB(){
     std::string(" ") + std::to_string(ATB_HEIGHT) + std::string("'");
   TwDefine(s.c_str());
 
-  TwDefine(" lpdTweak resizable=true ");
-
-  //position=top-right corner
-  s = std::string("lpdTweak position='") + 
-    std::to_string((int)(width - ATB_WIDTH)) + std::string(" 0'");
-  TwDefine(s.c_str());
+  TwDefine(" lpdTweak movable=false ");
+  TwDefine(" lpdTweak resizable=false ");
+  TwDefine(" lpdTweak contained=true alpha=255 position='0 0'");
 
   TwAddVarCB(bar, "ISOVALUE", TW_TYPE_FLOAT, TWCB_Isovalue_Set, 
 	     TWCB_Isovalue_Get, &isovalue, 
@@ -851,6 +850,8 @@ void init_ATB(){
 	     TWCB_Set_String, TWCB_Get_String, &(barVals.fileOut), 
 	     "label='Screenshot Name' group='Screenshot'");
 
+  glfwMakeContextCurrent(mainWindow);
+  
 }
 
 int main(int argc, const char **argv) {
@@ -868,23 +869,33 @@ int main(int argc, const char **argv) {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   
 
-  GLFWwindow *window = glfwCreateWindow(640,480, "Sample", NULL, NULL);
-  if(!window){
-    std::cout << "failed to create context\n";
+  mainWindow = glfwCreateWindow(640,480, "Isorender", NULL, NULL);
+  if(!mainWindow){
+    std::cout << "failed to create display context\n";
     glfwTerminate();
     exit(EXIT_FAILURE);
   }
-
-  glfwMakeContextCurrent(window);
   
-
+  glfwWindowHint(GLFW_RESIZABLE, 0);
+  
+  ATBWindow = glfwCreateWindow(ATB_WIDTH,ATB_HEIGHT, "Isorender Toolbar", NULL, NULL);
+  if(!mainWindow){
+    std::cout << "failed to toolbar context\n";
+    glfwTerminate();
+    exit(EXIT_FAILURE);
+  }
+  
   init_ATB();
 
+  glfwMakeContextCurrent(ATBWindow);
+  glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+  glfwMakeContextCurrent(mainWindow);
+  glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+  
   parse_args(argc,argv);
   init_seek();
 
   enable_shaders("isorender.vsh","isorender.fsh","isorender.gsh");
-
 
   poly = generate_sample(isovalue);
   buffer_data(poly,true);
@@ -892,23 +903,31 @@ int main(int argc, const char **argv) {
   glBindVertexArray(render.vao);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.elms);
 
-  glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+  /*Register Callback for each window*/
+  glfwSetCursorPosCallback(mainWindow, mousePosCB);
+  glfwSetMouseButtonCallback(mainWindow,mouseButtonCB);
+  glfwSetWindowSizeCallback(mainWindow,screenSizeCB);
+  glfwSetScrollCallback( mainWindow , mouseScrollCB );
+  glfwSetKeyCallback( mainWindow , keyFunCB);
 
-  glfwSetCursorPosCallback(window, mousePosCB);
-  glfwSetMouseButtonCallback(window,mouseButtonCB);
-  glfwSetWindowSizeCallback(window,screenSizeCB);
-  glfwSetScrollCallback( window , mouseScrollCB );
-  glfwSetKeyCallback(window , keyFunCB);
-
-
+  
+  glfwSetCursorPosCallback(ATBWindow, TWCB_mousePos);
+  glfwSetMouseButtonCallback(ATBWindow, TWCB_mouseButton);
+  glfwSetKeyCallback(ATBWindow, TWCB_Key);
+  glfwSetWindowSizeCallback(ATBWindow, TWCB_screenSize);
+  
   glEnable(GL_DEPTH_TEST);
 
-
-  while(true){
+  while(!glfwWindowShouldClose(mainWindow)){
+    glfwMakeContextCurrent(mainWindow);
     render_poly();
+    glfwMakeContextCurrent(ATBWindow);
+    glClear(GL_COLOR_BUFFER_BIT);
     TwDraw();
     glfwWaitEvents();
-    glfwSwapBuffers(window);
+    glfwSwapBuffers(ATBWindow);
+    glfwMakeContextCurrent(mainWindow);
+    glfwSwapBuffers(mainWindow);
 
   }
 

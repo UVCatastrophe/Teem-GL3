@@ -679,7 +679,7 @@ main(int argc, const char **argv) {
 
   glEnable(GL_DEPTH_TEST);
 
-  while(true){
+  while(!glfwWindowShouldClose(theWindow)){
     render_poly();
     TwDraw();
     glfwWaitEvents();
