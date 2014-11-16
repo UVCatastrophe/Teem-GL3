@@ -29,8 +29,10 @@ public:
     std::string name;
     ShaderProgram *prog;
     std::vector<PolyDataInstance> instances;
-    std::map<std::string, GLuint> unifromLocations
+    std::map<std::string, GLuint> unifromLocations;
     
+    void newShaderProgramFromFile(const char* vshFile,
+                                  const char* fshFile);
     void newShaderProgramFromFile(const char* vshFile,
                                   const char* fshFile,
                                   const char* gshFile);
@@ -39,4 +41,7 @@ public:
     
     void (*prerender)(void*);
     void *prerenderData;
+    
+private:
+    void getAllUniforms();
 };
