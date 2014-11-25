@@ -10,6 +10,20 @@ valgrind --leak-check=full --show-reachable=yes --error-limit=no --gen-suppressi
 
 valgrind --leak-check=full --show-reachable=yes --error-limit=no --suppressions=supress.txt ./glkjdemo
 
+shader practices:
+http://antongerdelan.net/opengl/shaders.html
+https://www.opengl.org/wiki/Shader_Compilation
+https://www.opengl.org/wiki/GLSL_:_common_mistakes
+http://www.lighthouse3d.com/tutorials/glsl-core-tutorial/glsl-core-tutorial-inter-shader-communication/
+http://duriansoftware.com/joe/An-intro-to-modern-OpenGL.-Chapter-2.2:-Shaders.html
+
+possibly good precedent for CMake
+http://www.opengl-tutorial.org/beginners-tutorials/tutorial-1-opening-a-window/
+
+using sRGB:
+http://www.glfw.org/docs/latest/window.html : GLFW_SRGB_CAPABLE'
+http://gamedevelopment.tutsplus.com/articles/gamma-correction-and-why-it-matters--gamedev-14466
+
 */
 
 
