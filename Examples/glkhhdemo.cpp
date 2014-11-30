@@ -15,6 +15,8 @@
 #include <teem/nrrd.h>
 #include <teem/limn.h>
 
+#include <Hale.h>
+
 #include "shader.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -247,37 +249,6 @@ void screenSizeCB(GLFWwindow* win, int w, int h){
 
 }
 
-/* Converts a teem enum to an openGL enum */
-GLuint get_prim(unsigned char type){
-  GLuint ret;
-  switch(type){
-  case limnPrimitiveUnknown:
-  case limnPrimitiveNoop:
-  case limnPrimitiveLast:
-    ret = 0;
-    break;
-  case limnPrimitiveTriangles:
-    ret = GL_TRIANGLES;
-    break;
-  case limnPrimitiveTriangleStrip:
-    ret = GL_TRIANGLE_STRIP;
-    break;
-  case limnPrimitiveTriangleFan:
-    ret = GL_TRIANGLE_FAN;
-    break;
-  case limnPrimitiveQuads:
-    ret = GL_QUADS;
-    break;
-  case limnPrimitiveLineStrip:
-    ret = GL_LINE_STRIP;
-    break;
-  case limnPrimitiveLines:
-    ret = GL_LINES;
-    break;
-  }
-  return ret;
-}
-
 /*Generates a spiral using limnPolyDataSpiralSuperquadratic and returns
 * a pointer to the newly created object.
 */
@@ -339,7 +310,7 @@ void render_poly(){
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.elms);
   //Render all specified primatives
   for(int i = 0; i < poly->primNum; i++){
-    GLuint prim = get_prim(poly->type[i]);
+    GLuint prim = Hale::limnToGLPrim(poly->type[i]);
 
     glDrawElements( prim, poly->icnt[i],
 		    GL_UNSIGNED_INT, ((void*) 0));
