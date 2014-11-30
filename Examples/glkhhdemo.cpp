@@ -453,7 +453,7 @@ main(int argc, const char **argv) {
 
   glfwMakeContextCurrent(theWindow);
 
-  enable_shaders("glkdemo.vsh", "glkdemo.fsh");
+  enable_shaders("glkhhdemo.vsh", "glkdemo.fsh");
 
   poly = generate_spiral(lpd_alpha, lpd_beta, lpd_theta, lpd_phi);
   buffer_data(poly,true);
