@@ -26,7 +26,7 @@ GLFWwindow *theWindow = NULL;
 double height = 480;
 double width = 640;
 
-/* The parameters for call to generate_spiral. Modified by ATB */
+/* The parameters for call to generate_spiral */
 float lpd_alpha = 0.2;
 float lpd_beta = 0.2;
 float lpd_theta = 50;
@@ -168,17 +168,6 @@ void mouseButtonCB(GLFWwindow* w, int button,
 
   glfwGetCursorPos (w, &(ui.last_x), &(ui.last_y));
 
-  //User is not currently rotating or zooming.
-  if (ui.isDown == false){
-    int twret;
-    //Pass the event to ATB
-    twret = 0; // TwEventMouseButtonGLFW( button , action );
-    if (twret) {
-      /* ATB has handled it */
-      return;
-    }
-  }
-
   //Else, set up the mode for rotating/zooming
   if (action == GLFW_PRESS) {
     ui.isDown = true;
@@ -238,13 +227,7 @@ void translate_diff(glm::vec3 diff){
 
 void mousePosCB(GLFWwindow* w, double x, double y){
 
-  /*
-  ** If zooming/rotating is not occuring, then there's nothing for us
-  ** to do except let ATB know about it. The return of the ATB call
-  ** will say whether ATB handled it, but we don't need that info.
-  */
   if (!ui.isDown) {
-    // TwEventMousePosGLFW( x*ui.pixScale, y*ui.pixScale );
     return;
   }
 
@@ -524,67 +507,6 @@ void enable_shaders(const char* vshFile, const char* fshFile){
 
 }
 
-//Initialize the ATB pannel.
-void init_ATB(){
-  int buffSx, buffSy, winSx, winSy;
-  std::string s;
-
-  glfwGetWindowSize(theWindow, &winSx, &winSy);
-  glfwGetFramebufferSize(theWindow, &buffSx, &buffSy);
-  ui.pixScale = (buffSx <= winSx) ? 1 : buffSx/winSx;
-  fprintf(stderr, "init_ATB: hello: size win (%d %d); buff (%d %d) scale %d\n",
-          winSx, winSy, buffSx, buffSy, ui.pixScale);
-  if (ui.pixScale > 1) {
-    s = "GLOBAL fontscaling=" + std::to_string(ui.pixScale) ;
-    // TwDefine(s.c_str());
-  }
-
-  // TwInit(TW_OPENGL_CORE, NULL);
-  // TwWindowSize(buffSx, buffSy);
-
-  // bar = TwNewBar("lpdTweak");
-
-  /*
-  s = ("lpdTweak size='" + std::to_string(ui.pixScale*atbWidth)
-       + " " + std::to_string(ui.pixScale*atbHeight) + "'");
-  // TwDefine(s.c_str());
-
-  // TwDefine("lpdTweak resizable=true");
-
-  //position=top left corner
-  s = "lpdTweak position='0 0'";
-  // TwDefine(s.c_str());
-
-  TwAddVarCB(bar, "ALPHA", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get,
-	     &lpd_alpha, "min=0.0 step=.01 label=Alpha");
-
-  TwAddVarCB(bar, "BETA", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get,
-	     &lpd_beta, "min=0.0 step=.01 label=Beta");
-
-  TwAddVarCB(bar, "THETA", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get,
-	     &lpd_theta, "min=1.0 step=1 label=Theta");
-
-  TwAddVarCB(bar, "PHI", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get,
-	     &lpd_phi, "min=1.0 step=1 label=Phi");
-
-  TwAddVarRW(bar, "FixUP", TW_TYPE_BOOLCPP, &(cam.fixUp),
-	     " label='Fix Up Vector' group='Camera'");
-
-  TwAddVarCB(bar, "CamCenter", TW_TYPE_DIR3F,TWCB_Cam_Set, TWCB_Cam_Get,
-	     glm::value_ptr(cam.center), "label='Center' group='Camera'");
-
-  TwAddVarCB(bar, "CamPos", TW_TYPE_DIR3F, TWCB_Cam_Set, TWCB_Cam_Get,
-	     glm::value_ptr(cam.pos), "label='Position' group='Camera'");
-
-  TwAddVarCB(bar, "CamUp", TW_TYPE_DIR3F, TWCB_Cam_Set, TWCB_Cam_Get,
-	     glm::value_ptr(cam.up),"label='Up Vector' group='Camera'");
-
-  TwAddVarRW(bar, "LightDir", TW_TYPE_DIR3F,
-	     glm::value_ptr(light_dir), "label='Light Direction'");
-  */
-}
-
-
 int
 main(int argc, const char **argv) {
   /* these variables are used for any program that conforms
@@ -638,8 +560,6 @@ main(int argc, const char **argv) {
   }
 
   glfwMakeContextCurrent(theWindow);
-
-  init_ATB();
 
   enable_shaders("glkdemo.vsh", "glkdemo.fsh");
 
