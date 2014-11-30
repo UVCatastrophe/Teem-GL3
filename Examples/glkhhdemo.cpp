@@ -70,7 +70,6 @@ struct camera{
 glm::mat4 view = glm::lookAt(cam.from,cam.at,cam.up);
 glm::mat4 proj = glm::perspective(cam.fov, ((float) width)/((float)height),
 				  cam.near_plane, cam.far_plane);
-glm::mat4 model = glm::mat4();
 
 glm::vec3 light_dir = glm::normalize(glm::vec3(1.0f,1.0f,3.0f));
 
@@ -293,7 +292,6 @@ void render_poly(){
   //Transformaiton Matrix Uniforms
   glUniformMatrix4fv(render.uniforms[0],1,false,glm::value_ptr(proj));
   glUniformMatrix4fv(render.uniforms[1],1,false,glm::value_ptr(view));
-  glUniformMatrix4fv(render.uniforms[2],1,false,glm::value_ptr(model));
 
   //Light Direction Uniforms
   glUniform3fv(render.uniforms[3],1,glm::value_ptr(light_dir));
@@ -397,7 +395,6 @@ void enable_shaders(const char* vshFile, const char* fshFile){
 
   render.uniforms[0] = render.shader->UniformLocation("proj");
   render.uniforms[1] = render.shader->UniformLocation("view");
-  render.uniforms[2] = render.shader->UniformLocation("model");
   render.uniforms[3] = render.shader->UniformLocation("light_dir");
 
 }
