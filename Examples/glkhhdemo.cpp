@@ -1,7 +1,5 @@
 #include <iostream>
 
-#include <AntTweakBar.h>
-
 #define GLM_FORCE_RADIANS
 
 #if defined(__APPLE_CC__)
@@ -22,10 +20,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-/* Dimensions of the AntTweakBar panel*/
-int atbWidth = 200;
-int atbHeight = 300;
-
 GLFWwindow *theWindow = NULL;
 
 /* Dimensions of the screen*/
@@ -40,8 +34,6 @@ float lpd_phi = 50;
 
 // Poly data for the spiral
 limnPolyData *poly;
-// The ATB panel
-TwBar *bar;
 
 #define USE_TIME false
 
@@ -180,7 +172,7 @@ void mouseButtonCB(GLFWwindow* w, int button,
   if (ui.isDown == false){
     int twret;
     //Pass the event to ATB
-    twret = TwEventMouseButtonGLFW( button , action );
+    twret = 0; // TwEventMouseButtonGLFW( button , action );
     if (twret) {
       /* ATB has handled it */
       return;
@@ -252,7 +244,7 @@ void mousePosCB(GLFWwindow* w, double x, double y){
   ** will say whether ATB handled it, but we don't need that info.
   */
   if (!ui.isDown) {
-    TwEventMousePosGLFW( x*ui.pixScale, y*ui.pixScale );
+    // TwEventMousePosGLFW( x*ui.pixScale, y*ui.pixScale );
     return;
   }
 
@@ -341,19 +333,6 @@ void screenSizeCB(GLFWwindow* win, int w, int h){
   //Update the projection matrix to reflect the new aspect ratio
   update_proj();
 
-}
-
-void keyFunCB( GLFWwindow* window,int key,int scancode,int action,int mods)
-{
-  //TODO: add a reset key
-
-  TwEventKeyGLFW( key , action );
-  TwEventCharGLFW( key  , action );
-}
-
-void mouseScrollCB(  GLFWwindow* window, double x , double y )
-{
-  TwEventMouseWheelGLFW( (int)y );
 }
 
 /* Converts a teem enum to an openGL enum */
@@ -557,23 +536,24 @@ void init_ATB(){
           winSx, winSy, buffSx, buffSy, ui.pixScale);
   if (ui.pixScale > 1) {
     s = "GLOBAL fontscaling=" + std::to_string(ui.pixScale) ;
-    TwDefine(s.c_str());
+    // TwDefine(s.c_str());
   }
 
-  TwInit(TW_OPENGL_CORE, NULL);
-  TwWindowSize(buffSx, buffSy);
+  // TwInit(TW_OPENGL_CORE, NULL);
+  // TwWindowSize(buffSx, buffSy);
 
-  bar = TwNewBar("lpdTweak");
+  // bar = TwNewBar("lpdTweak");
 
+  /*
   s = ("lpdTweak size='" + std::to_string(ui.pixScale*atbWidth)
        + " " + std::to_string(ui.pixScale*atbHeight) + "'");
-  TwDefine(s.c_str());
+  // TwDefine(s.c_str());
 
-  TwDefine("lpdTweak resizable=true");
+  // TwDefine("lpdTweak resizable=true");
 
   //position=top left corner
   s = "lpdTweak position='0 0'";
-  TwDefine(s.c_str());
+  // TwDefine(s.c_str());
 
   TwAddVarCB(bar, "ALPHA", TW_TYPE_FLOAT, TWCB_Spiral_Set, TWCB_Spiral_Get,
 	     &lpd_alpha, "min=0.0 step=.01 label=Alpha");
@@ -601,7 +581,7 @@ void init_ATB(){
 
   TwAddVarRW(bar, "LightDir", TW_TYPE_DIR3F,
 	     glm::value_ptr(light_dir), "label='Light Direction'");
-
+  */
 }
 
 
@@ -674,14 +654,12 @@ main(int argc, const char **argv) {
   glfwSetCursorPosCallback(theWindow, mousePosCB);
   glfwSetMouseButtonCallback(theWindow,mouseButtonCB);
   glfwSetWindowSizeCallback(theWindow,screenSizeCB);
-  glfwSetScrollCallback( theWindow , mouseScrollCB );
-  glfwSetKeyCallback(theWindow , keyFunCB);
 
   glEnable(GL_DEPTH_TEST);
 
   while(!glfwWindowShouldClose(theWindow)){
     render_poly();
-    TwDraw();
+    // TwDraw();
     glfwWaitEvents();
     glfwSwapBuffers(theWindow);
 
