@@ -249,8 +249,9 @@ void screenSizeCB(GLFWwindow* win, int w, int h){
 
 }
 
-/*Generates a spiral using limnPolyDataSpiralSuperquadratic and returns
-* a pointer to the newly created object.
+/*
+** Generates a spiral using limnPolyDataSpiralSuperquadratic and returns
+** a pointer to the newly created object.
 */
 limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
 			      unsigned int phiRes){
