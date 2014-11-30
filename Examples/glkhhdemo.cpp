@@ -52,8 +52,6 @@ struct userInterface {
   int mouseButton;
   //0 for all, 1 for fov, 2 for just X, 3 for just y, 4 for just z
   int mode;
-  int pixScale = 1; /* scaling between locations and pixels;
-                       e.g. 2 for Mac retina displays */
   double last_x;
   double last_y;
 } ui;
