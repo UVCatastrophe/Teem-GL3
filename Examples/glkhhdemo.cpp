@@ -59,19 +59,17 @@ struct userInterface {
 } ui;
 
 struct camera{
-  glm::vec3 center = glm::vec3(0.0f,0.0f,0.0f);
-  glm::vec3 pos = glm::vec3(3.0f,0.0f,0.0f);
+  glm::vec3 at = glm::vec3(0.0f,0.0f,0.0f);
+  glm::vec3 from = glm::vec3(8.0f,0.0f,0.0f);
   glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-  float fov = 1.0f;
-  float near_plane= .1f;
-  float far_plane= 100.0f;
-
-  bool fixUp = false;
+  float fov = 0.4f;
+  float near_plane= 6.0f;
+  float far_plane= 10.0f;
 } cam;
 
 // Transformation Matricies
-glm::mat4 view = glm::lookAt(cam.pos,cam.center,cam.up);
+glm::mat4 view = glm::lookAt(cam.from,cam.at,cam.up);
 glm::mat4 proj = glm::perspective(cam.fov, ((float) width)/((float)height),
 				  cam.near_plane, cam.far_plane);
 glm::mat4 model = glm::mat4();
@@ -86,7 +84,7 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
 /* ---------------------Function Definitions---------------- */
 
 void update_view(){
-  view = glm::lookAt(cam.pos,cam.center,cam.up);
+  view = glm::lookAt(cam.from,cam.at,cam.up);
 }
 
 void update_proj(){
@@ -133,14 +131,13 @@ void rotate_diff(glm::vec3 diff){
   glm::mat4 inv = glm::inverse(view);
   glm::vec4 invV = inv * glm::vec4(diff,0.0);
 
-  glm::vec3 norm = glm::cross(cam.center-cam.pos,glm::vec3(invV));
+  glm::vec3 norm = glm::cross(cam.at-cam.from,glm::vec3(invV));
   float angle = (glm::length(diff) * 2*3.1415 ) / width;
 
   //Create a rotation matrix around norm.
   glm::mat4 rot = glm::rotate(glm::mat4(),angle,norm);
-  cam.pos = glm::vec3(rot * glm::vec4(cam.pos,0.0));
-  if(!cam.fixUp)
-    cam.up = glm::vec3(rot*glm::vec4(cam.up,0.0));
+  cam.from = glm::vec3(rot * glm::vec4(cam.from,0.0));
+  cam.up = glm::vec3(rot*glm::vec4(cam.up,0.0));
 
   update_view();
 }
@@ -151,8 +148,8 @@ void translate_diff(glm::vec3 diff){
 
   glm::mat4 trans = glm::translate(glm::mat4(),
 				   glm::vec3(invV)/(float)width);
-  cam.center = glm::vec3(trans*glm::vec4(cam.center,1.0));
-  cam.pos = glm::vec3(trans*glm::vec4(cam.pos,1.0));
+  cam.at = glm::vec3(trans*glm::vec4(cam.at,1.0));
+  cam.from = glm::vec3(trans*glm::vec4(cam.from,1.0));
   update_view();
 }
 
@@ -219,10 +216,9 @@ void mousePosCB(GLFWwindow* w, double x, double y){
      if(ui.mouseButton == GLFW_MOUSE_BUTTON_1){
        float angle = (x_diff*3.1415*2) / width;
        glm::mat4 rot = glm::rotate(glm::mat4(),angle,
-				   cam.pos-cam.center);
-       cam.pos = glm::vec3(rot * glm::vec4(cam.pos,0.0));
-       if(!cam.fixUp)
-	 cam.up = glm::vec3(rot*glm::vec4(cam.up,0.0));
+				   cam.from-cam.at);
+       cam.from = glm::vec3(rot * glm::vec4(cam.from,0.0));
+       cam.up = glm::vec3(rot*glm::vec4(cam.up,0.0));
        update_view();
      }
 
@@ -435,9 +431,9 @@ main(int argc, const char **argv) {
              "alpha of super-quadric");
   hestOptAdd(&hopt, "b", "beta", airTypeFloat, 1, 1, &lpd_beta, "0.2",
              "beta of super-quadric");
-  hestOptAdd(&hopt, "tr", "theta res", airTypeInt, 1, 1, &thetaRes, "10",
+  hestOptAdd(&hopt, "tr", "theta res", airTypeInt, 1, 1, &thetaRes, "40",
              "theta resolution");
-  hestOptAdd(&hopt, "pr", "phi res", airTypeInt, 1, 1, &phiRes, "10",
+  hestOptAdd(&hopt, "pr", "phi res", airTypeInt, 1, 1, &phiRes, "40",
              "phi resolution");
   hestParseOrDie(hopt, argc-1, argv+1, hparm,
                  me, "demo program", AIR_TRUE, AIR_TRUE, AIR_TRUE);
