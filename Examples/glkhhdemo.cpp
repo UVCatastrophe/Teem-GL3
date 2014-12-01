@@ -22,6 +22,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <glm/gtx/string_cast.hpp>
+
 GLFWwindow *theWindow = NULL;
 
 /* Dimensions of the screen*/
@@ -56,20 +58,10 @@ struct userInterface {
   double last_y;
 } ui;
 
-struct camera{
-  glm::vec3 at = glm::vec3(0.0f,0.0f,0.0f);
-  glm::vec3 from = glm::vec3(8.0f,0.0f,0.0f);
-  glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-  float fov = 0.4f;
-  float near_plane= 6.0f;
-  float far_plane= 10.0f;
-} cam;
-
-// Transformation Matricies
-glm::mat4 view = glm::lookAt(cam.from,cam.at,cam.up);
-glm::mat4 proj = glm::perspective(cam.fov, ((float) width)/((float)height),
-				  cam.near_plane, cam.far_plane);
+Hale::Camera hcam(glm::vec3(8.0f,0.0f,0.0f),
+                  glm::vec3(0.0f,0.0f,0.0f),
+                  glm::vec3(0.0f, 1.0f, 0.0f),
+                  0.4f, 1.33333, 6, 10, false);
 
 glm::vec3 light_dir = glm::normalize(glm::vec3(1.0f,1.0f,3.0f));
 
@@ -79,15 +71,6 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
 			      unsigned int phiRes);
 
 /* ---------------------Function Definitions---------------- */
-
-void update_view(){
-  view = glm::lookAt(cam.from,cam.at,cam.up);
-}
-
-void update_proj(){
-  proj = glm::perspective(cam.fov, ((float) width)/((float)height),
-			  cam.near_plane, cam.far_plane);
-}
 
 void mouseButtonCB(GLFWwindow* w, int button,
 		   int action, int mods){
@@ -125,29 +108,28 @@ void mouseButtonCB(GLFWwindow* w, int button,
 
 void rotate_diff(glm::vec3 diff){
 
-  glm::mat4 inv = glm::inverse(view);
+  glm::mat4 inv = glm::inverse(hcam.view());
   glm::vec4 invV = inv * glm::vec4(diff,0.0);
 
-  glm::vec3 norm = glm::cross(cam.at-cam.from,glm::vec3(invV));
+  glm::vec3 norm = glm::cross(hcam.at()-hcam.from(),glm::vec3(invV));
   float angle = (glm::length(diff) * 2*3.1415 ) / width;
 
   //Create a rotation matrix around norm.
   glm::mat4 rot = glm::rotate(glm::mat4(),angle,norm);
-  cam.from = glm::vec3(rot * glm::vec4(cam.from,0.0));
-  cam.up = glm::vec3(rot*glm::vec4(cam.up,0.0));
 
-  update_view();
+  hcam.from(glm::vec3(rot * glm::vec4(hcam.from(),0.0)));
+  hcam.up(glm::vec3(rot*glm::vec4(hcam.up(),0.0)));
 }
 
 void translate_diff(glm::vec3 diff){
-  glm::mat4 inv = glm::inverse(view);
+  glm::mat4 inv = glm::inverse(hcam.view());
   glm::vec4 invV = inv * glm::vec4(diff,0.0);
 
   glm::mat4 trans = glm::translate(glm::mat4(),
 				   glm::vec3(invV)/(float)width);
-  cam.at = glm::vec3(trans*glm::vec4(cam.at,1.0));
-  cam.from = glm::vec3(trans*glm::vec4(cam.from,1.0));
-  update_view();
+
+  hcam.at(glm::vec3(trans*glm::vec4(hcam.at(),1.0)));
+  hcam.from(glm::vec3(trans*glm::vec4(hcam.from(),1.0)));
 }
 
 void mousePosCB(GLFWwindow* w, double x, double y){
@@ -179,8 +161,7 @@ void mousePosCB(GLFWwindow* w, double x, double y){
 
     //FOV zoom
     if(ui.mouseButton == GLFW_MOUSE_BUTTON_1){
-      cam.fov += (-y_diff / height);
-      update_proj();
+      hcam.fov(hcam.fov() + (-y_diff / height));
     }
     else if(ui.mouseButton == GLFW_MOUSE_BUTTON_2)
       std::cout << "here\n";
@@ -213,10 +194,9 @@ void mousePosCB(GLFWwindow* w, double x, double y){
      if(ui.mouseButton == GLFW_MOUSE_BUTTON_1){
        float angle = (x_diff*3.1415*2) / width;
        glm::mat4 rot = glm::rotate(glm::mat4(),angle,
-				   cam.from-cam.at);
-       cam.from = glm::vec3(rot * glm::vec4(cam.from,0.0));
-       cam.up = glm::vec3(rot*glm::vec4(cam.up,0.0));
-       update_view();
+				   hcam.from()-hcam.at());
+       hcam.from(glm::vec3(rot * glm::vec4(hcam.from(),0.0)));
+       hcam.up(glm::vec3(rot*glm::vec4(hcam.up(),0.0)));
      }
 
    }
@@ -238,7 +218,7 @@ void screenSizeCB(GLFWwindow* win, int w, int h){
   glViewport(0,0,buffSx, buffSy);
 
   //Update the projection matrix to reflect the new aspect ratio
-  update_proj();
+  hcam.aspect(((float)buffSx)/buffSy);
 
 }
 
@@ -290,8 +270,10 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
 //Render the limnPolyData given in the global variable "poly"
 void render_poly(){
   //Transformaiton Matrix Uniforms
-  glUniformMatrix4fv(render.uniforms[0],1,false,glm::value_ptr(proj));
-  glUniformMatrix4fv(render.uniforms[1],1,false,glm::value_ptr(view));
+  //glUniformMatrix4fv(render.uniforms[0],1,false,glm::value_ptr(proj));
+  //glUniformMatrix4fv(render.uniforms[1],1,false,glm::value_ptr(view));
+  glUniformMatrix4fv(render.uniforms[0],1,false,hcam.projectPtr());
+  glUniformMatrix4fv(render.uniforms[1],1,false,hcam.viewPtr());
 
   //Light Direction Uniforms
   glUniform3fv(render.uniforms[3],1,glm::value_ptr(light_dir));
@@ -471,10 +453,8 @@ main(int argc, const char **argv) {
 
   while(!glfwWindowShouldClose(theWindow)){
     render_poly();
-    // TwDraw();
     glfwWaitEvents();
     glfwSwapBuffers(theWindow);
-
   }
 
   /* clean exit; all okay */
