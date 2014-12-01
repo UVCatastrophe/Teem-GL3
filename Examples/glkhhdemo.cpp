@@ -24,7 +24,10 @@
 
 #include <glm/gtx/string_cast.hpp>
 
-GLFWwindow *theWindow = NULL;
+/* global so that callbacks can see it, but pointer (instead of value)
+** so that it can stay uninitialized until main()'s execution
+*/
+Hale::Viewer *viewer = NULL;
 
 /* Dimensions of the screen*/
 double height = 480;
@@ -57,11 +60,6 @@ struct userInterface {
   double last_x;
   double last_y;
 } ui;
-
-Hale::Camera hcam(glm::vec3(8.0f,0.0f,0.0f),
-                  glm::vec3(0.0f,0.0f,0.0f),
-                  glm::vec3(0.0f, 1.0f, 0.0f),
-                  0.4f, 1.33333, 6, 10, false);
 
 glm::vec3 light_dir = glm::normalize(glm::vec3(1.0f,1.0f,3.0f));
 
@@ -108,28 +106,28 @@ void mouseButtonCB(GLFWwindow* w, int button,
 
 void rotate_diff(glm::vec3 diff){
 
-  glm::mat4 inv = glm::inverse(hcam.view());
+  glm::mat4 inv = glm::inverse(viewer->camera.view());
   glm::vec4 invV = inv * glm::vec4(diff,0.0);
 
-  glm::vec3 norm = glm::cross(hcam.at()-hcam.from(),glm::vec3(invV));
+  glm::vec3 norm = glm::cross(viewer->camera.at()-viewer->camera.from(),glm::vec3(invV));
   float angle = (glm::length(diff) * 2*3.1415 ) / width;
 
   //Create a rotation matrix around norm.
   glm::mat4 rot = glm::rotate(glm::mat4(),angle,norm);
 
-  hcam.from(glm::vec3(rot * glm::vec4(hcam.from(),0.0)));
-  hcam.up(glm::vec3(rot*glm::vec4(hcam.up(),0.0)));
+  viewer->camera.from(glm::vec3(rot * glm::vec4(viewer->camera.from(),0.0)));
+  viewer->camera.up(glm::vec3(rot*glm::vec4(viewer->camera.up(),0.0)));
 }
 
 void translate_diff(glm::vec3 diff){
-  glm::mat4 inv = glm::inverse(hcam.view());
+  glm::mat4 inv = glm::inverse(viewer->camera.view());
   glm::vec4 invV = inv * glm::vec4(diff,0.0);
 
   glm::mat4 trans = glm::translate(glm::mat4(),
 				   glm::vec3(invV)/(float)width);
 
-  hcam.at(glm::vec3(trans*glm::vec4(hcam.at(),1.0)));
-  hcam.from(glm::vec3(trans*glm::vec4(hcam.from(),1.0)));
+  viewer->camera.at(glm::vec3(trans*glm::vec4(viewer->camera.at(),1.0)));
+  viewer->camera.from(glm::vec3(trans*glm::vec4(viewer->camera.from(),1.0)));
 }
 
 void mousePosCB(GLFWwindow* w, double x, double y){
@@ -161,7 +159,7 @@ void mousePosCB(GLFWwindow* w, double x, double y){
 
     //FOV zoom
     if(ui.mouseButton == GLFW_MOUSE_BUTTON_1){
-      hcam.fov(hcam.fov() + (-y_diff / height));
+      viewer->camera.fov(viewer->camera.fov() + (-y_diff / height));
     }
     else if(ui.mouseButton == GLFW_MOUSE_BUTTON_2)
       std::cout << "here\n";
@@ -194,31 +192,15 @@ void mousePosCB(GLFWwindow* w, double x, double y){
      if(ui.mouseButton == GLFW_MOUSE_BUTTON_1){
        float angle = (x_diff*3.1415*2) / width;
        glm::mat4 rot = glm::rotate(glm::mat4(),angle,
-				   hcam.from()-hcam.at());
-       hcam.from(glm::vec3(rot * glm::vec4(hcam.from(),0.0)));
-       hcam.up(glm::vec3(rot*glm::vec4(hcam.up(),0.0)));
+				   viewer->camera.from()-viewer->camera.at());
+       viewer->camera.from(glm::vec3(rot * glm::vec4(viewer->camera.from(),0.0)));
+       viewer->camera.up(glm::vec3(rot*glm::vec4(viewer->camera.up(),0.0)));
      }
 
    }
 
   ui.last_x = x;
   ui.last_y = y;
-
-}
-
-void screenSizeCB(GLFWwindow* win, int w, int h){
-  int buffSx, buffSy;
-  width = w;
-  height = h;
-
-  glfwGetFramebufferSize(win, &buffSx, &buffSy);
-  /* fprintf(stderr, "%s: win %d %d, buff %d %d\n", "screenSizeCB",
-     w, h, buffSx, buffSy); */
-  //glViewport(0,0,width,height);
-  glViewport(0,0,buffSx, buffSy);
-
-  //Update the projection matrix to reflect the new aspect ratio
-  hcam.aspect(((float)buffSx)/buffSy);
 
 }
 
@@ -270,10 +252,8 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
 //Render the limnPolyData given in the global variable "poly"
 void render_poly(){
   //Transformaiton Matrix Uniforms
-  //glUniformMatrix4fv(render.uniforms[0],1,false,glm::value_ptr(proj));
-  //glUniformMatrix4fv(render.uniforms[1],1,false,glm::value_ptr(view));
-  glUniformMatrix4fv(render.uniforms[0],1,false,hcam.projectPtr());
-  glUniformMatrix4fv(render.uniforms[1],1,false,hcam.viewPtr());
+  glUniformMatrix4fv(render.uniforms[0],1,false,viewer->camera.projectPtr());
+  glUniformMatrix4fv(render.uniforms[1],1,false,viewer->camera.viewPtr());
 
   //Light Direction Uniforms
   glUniform3fv(render.uniforms[3],1,glm::value_ptr(light_dir));
@@ -421,19 +401,23 @@ main(int argc, const char **argv) {
   lpd_theta = thetaRes;
   lpd_phi = phiRes;
 
+  if (Hale::init()) {
+    fprintf(stderr, "%s: Hale::init() failed\n", me);
+    airMopError(mop);
+    return 1;
+  }
+
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // Use OpenGL Core v3.2
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-  theWindow = glfwCreateWindow(width, height, "Sample", NULL, NULL);
-  if (!theWindow) {
-    glfwTerminate();
-    exit(EXIT_FAILURE);
-  }
-
-  glfwMakeContextCurrent(theWindow);
+  viewer = new Hale::Viewer(width, height, "Bingo");
+  viewer->camera.init(glm::vec3(8.0f,0.0f,0.0f),
+                      glm::vec3(0.0f,0.0f,0.0f),
+                      glm::vec3(0.0f, 1.0f, 0.0f),
+                      0.4f, 1.33333, 6, 10, false);
 
   enable_shaders("glkhhdemo.vsh", "glkdemo.fsh");
 
@@ -445,19 +429,19 @@ main(int argc, const char **argv) {
 
   glClearColor(0.13f, 0.16f, 0.2f, 1.0f);
 
-  glfwSetCursorPosCallback(theWindow, mousePosCB);
-  glfwSetMouseButtonCallback(theWindow,mouseButtonCB);
-  glfwSetWindowSizeCallback(theWindow,screenSizeCB);
+  glfwSetCursorPosCallback(viewer->_window, mousePosCB);
+  glfwSetMouseButtonCallback(viewer->_window,mouseButtonCB);
 
   glEnable(GL_DEPTH_TEST);
 
-  while(!glfwWindowShouldClose(theWindow)){
+  while(!Hale::finishing){
     render_poly();
     glfwWaitEvents();
-    glfwSwapBuffers(theWindow);
+    viewer->bufferSwap();
   }
 
   /* clean exit; all okay */
+  delete viewer;
   airMopOkay(mop);
   return 0;
 }
