@@ -22,16 +22,12 @@ LPATH = -L$(HALE)/lib -L$(TEEM)/lib -L$(GLM) -L$(ATB)/lib/
 
 CC = g++ -std=c++11
 
-all: glkhdemo glkhhdemo glkidemo glkjdemo
+all: glkhdemo glkhhdemo
 
 glkhdemo: glkhdemo.cpp
 	$(CC) $(IPATH) glkhdemo.cpp shader.cpp -o glkhdemo $(RPATH) $(LPATH) $(LIBS) $(OS_LIBS)
 glkhhdemo: glkhhdemo.cpp
 	$(CC) $(IPATH) glkhhdemo.cpp shader.cpp -o glkhhdemo $(RPATH) $(LPATH) $(LIBS) $(OS_LIBS)
-glkidemo: glkidemo.cpp
-	$(CC) $(IPATH) glkidemo.cpp shader.cpp -o glkidemo $(RPATH) $(LPATH) $(LIBS) $(OS_LIBS)
-glkjdemo: glkjdemo.cpp
-	$(CC) $(IPATH) glkjdemo.cpp shader.cpp -o glkjdemo $(RPATH) $(LPATH) $(LIBS) $(OS_LIBS)
 
 clean:
-	rm -rf glkhdemo glkhhdemo glkidemo glkjdemo
+	rm -rf glkhdemo glkhhdemo
