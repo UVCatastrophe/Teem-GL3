@@ -24,11 +24,6 @@
 
 #include <glm/gtx/string_cast.hpp>
 
-/* global so that callbacks can see it, but pointer (instead of value)
-** so that it can stay uninitialized until main()'s execution
-*/
-Hale::Viewer *viewer = NULL;
-
 /* Dimensions of the screen*/
 double height = 480;
 double width = 640;
@@ -105,7 +100,7 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
 }
 
 //Render the limnPolyData given in the global variable "poly"
-void render_poly(){
+void render_poly(Hale::Viewer *viewer){
   static const char me[]="render_poly";
   //Transformaiton Matrix Uniforms
   /*
@@ -219,7 +214,6 @@ void enable_shaders(const char* vshFile, const char* fshFile){
   render.uniforms[0] = render.shader->UniformLocation("proj");
   render.uniforms[1] = render.shader->UniformLocation("view");
   render.uniforms[3] = render.shader->UniformLocation("light_dir");
-
 }
 
 int
@@ -268,13 +262,7 @@ main(int argc, const char **argv) {
     return 1;
   }
 
-  glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // Use OpenGL Core v3.2
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-  viewer = new Hale::Viewer(width, height, "Bingo");
+  Hale::Viewer *viewer = new Hale::Viewer(width, height, "Bingo");
   viewer->camera.init(glm::vec3(8.0f,0.0f,0.0f),
                       glm::vec3(0.0f,0.0f,0.0f),
                       glm::vec3(0.0f, 1.0f, 0.0f),
@@ -289,14 +277,10 @@ main(int argc, const char **argv) {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.elms);
 
   glClearColor(0.13f, 0.16f, 0.2f, 1.0f);
-
-  //glfwSetCursorPosCallback(viewer->_window, mousePosCB);
-  //glfwSetMouseButtonCallback(viewer->_window,mouseButtonCB);
-
   glEnable(GL_DEPTH_TEST);
 
   while(!Hale::finishing){
-    render_poly();
+    render_poly(viewer);
     glfwWaitEvents();
     viewer->bufferSwap();
   }
