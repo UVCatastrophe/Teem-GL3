@@ -102,6 +102,8 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
 //Render the limnPolyData given in the global variable "poly"
 void render_poly(Hale::Viewer *viewer){
   static const char me[]="render_poly";
+  //fprintf(stderr, "%s: hi\n", me);
+
   //Transformaiton Matrix Uniforms
   /*
   fprintf(stderr, "!%s: view @ %p, proj @ %p\n", me,
@@ -133,6 +135,7 @@ void render_poly(Hale::Viewer *viewer){
     if( (error = glGetError()) != GL_NO_ERROR)
       std::cout << "GLERROR: " << error << std::endl;
   }
+  viewer->bufferSwap();
 }
 
 /* Buffer the data stored in the global limPolyData Poly.
@@ -267,6 +270,8 @@ main(int argc, const char **argv) {
                       glm::vec3(0.0f,0.0f,0.0f),
                       glm::vec3(0.0f, 1.0f, 0.0f),
                       25, 1.33333, -2, 2, false);
+  viewer->refreshCB((Hale::ViewerRefresher)render_poly);
+  viewer->refreshData(viewer);
 
   enable_shaders("glkhhdemo.vsh", "glkdemo.fsh");
 
@@ -279,10 +284,10 @@ main(int argc, const char **argv) {
   glClearColor(0.13f, 0.16f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
 
+  render_poly(viewer);
   while(!Hale::finishing){
-    render_poly(viewer);
     glfwWaitEvents();
-    viewer->bufferSwap();
+    render_poly(viewer);
   }
 
   /* clean exit; all okay */
