@@ -24,10 +24,10 @@ CC = g++ -std=c++11
 
 all: glkhdemo glkhhdemo
 
-glkhdemo: glkhdemo.cpp
-	$(CC) $(IPATH) glkhdemo.cpp shader.cpp -o glkhdemo $(RPATH) $(LPATH) $(LIBS) $(OS_LIBS)
-glkhhdemo: glkhhdemo.cpp
-	$(CC) $(IPATH) glkhhdemo.cpp shader.cpp -o glkhhdemo $(RPATH) $(LPATH) $(LIBS) $(OS_LIBS)
+glkhdemo: glkhdemo.cpp glkshader.cpp glkshader.h
+	$(CC) $(IPATH) glkhdemo.cpp glkshader.cpp -o glkhdemo $(RPATH) $(LPATH) $(LIBS) $(OS_LIBS)
+glkhhdemo: glkhhdemo.cpp glkshader.cpp glkshader.h
+	$(CC) $(IPATH) glkhhdemo.cpp glkshader.cpp -o glkhhdemo $(RPATH) $(LPATH) $(LIBS) $(OS_LIBS)
 
 clean:
 	rm -rf glkhdemo glkhhdemo
