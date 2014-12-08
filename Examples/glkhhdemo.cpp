@@ -206,8 +206,6 @@ main(int argc, const char **argv) {
   airMopAdd(mop, hopt, (airMopper)hestOptFree, airMopAlways);
   airMopAdd(mop, hopt, (airMopper)hestParseFree, airMopAlways);
 
-  program = new Hale::Program("glsl/demo_v.glsl", "glsl/demo_f.glsl");
-
   /* post-process command-line options */
   lpd_theta = thetaRes;
   lpd_phi = phiRes;
@@ -224,6 +222,7 @@ main(int argc, const char **argv) {
      ability for something better later */
   viewer.refreshData(&viewer);
 
+  program = new Hale::Program("glsl/demo_v.glsl", "glsl/demo_f.glsl");
   program->compile();
   program->bindAttribute(Hale::vertAttrIndxXYZ, "position");
   program->bindAttribute(Hale::vertAttrIndxNorm, "norm");
