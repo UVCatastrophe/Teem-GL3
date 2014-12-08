@@ -224,14 +224,15 @@ main(int argc, const char **argv) {
 
   Hale::Program program("glsl/demo_v.glsl", "glsl/demo_f.glsl");
   program.compile();
-  program.bind(Hale::vertAttrIndxXYZ, "position");
-  program.bind(Hale::vertAttrIndxNorm, "norm");
-  program.bind(Hale::vertAttrIndxRGBA, "color");
+  program.bindAttribute(Hale::vertAttrIndxXYZ, "position");
+  program.bindAttribute(Hale::vertAttrIndxNorm, "norm");
+  program.bindAttribute(Hale::vertAttrIndxRGBA, "color");
   program.link();
+  program.use();
+
   render.uniforms[0] = program.uniformLocation("proj");
   render.uniforms[1] = program.uniformLocation("view");
   render.uniforms[3] = program.uniformLocation("light_dir");
-  program.use();
 
   poly = generate_spiral(lpd_alpha, lpd_beta, lpd_theta, lpd_phi);
   buffer_data(poly,true);
