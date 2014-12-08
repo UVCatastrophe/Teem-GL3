@@ -17,7 +17,6 @@
 
 #include <Hale.h>
 
-#include "glkshader.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -37,14 +36,11 @@ float lpd_phi = 50;
 // Poly data for the spiral
 limnPolyData *poly;
 
-#define USE_TIME false
-
 struct render_info {
   GLuint vao = -1;
   GLuint buffs[3];
   GLuint uniforms[4];
   GLuint elms;
-  ShaderProgram* shader = NULL;
 } render;
 
 glm::vec3 light_dir = glm::normalize(glm::vec3(1.0f,1.0f,3.0f));
@@ -101,18 +97,10 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
 
 //Render the limnPolyData given in the global variable "poly"
 void render_poly(Hale::Viewer *viewer){
-  static const char me[]="render_poly";
+  static const std::string me="render_poly";
   //fprintf(stderr, "%s: hi\n", me);
 
   //Transformaiton Matrix Uniforms
-  /*
-  fprintf(stderr, "!%s: view @ %p, proj @ %p\n", me,
-          viewer->camera.viewPtr(), viewer->camera.projectPtr());
-  fprintf(stderr, "!%s: view = %s\n", me,
-          glm::to_string(viewer->camera.view()).c_str());
-  fprintf(stderr, "!%s: proj = %s\n", me,
-          glm::to_string(viewer->camera.project()).c_str());
-  */
   glUniformMatrix4fv(render.uniforms[0],1,false,viewer->camera.projectPtr());
   glUniformMatrix4fv(render.uniforms[1],1,false,viewer->camera.viewPtr());
 
@@ -130,10 +118,8 @@ void render_poly(Hale::Viewer *viewer){
 
     glDrawElements( prim, poly->icnt[i],
 		    GL_UNSIGNED_INT, ((void*) 0));
+    Hale::glErrorCheck(me, "glDrawElements(prim " + std::to_string(i) + ")");
     offset += poly->icnt[i];
-    GLuint error;
-    if( (error = glGetError()) != GL_NO_ERROR)
-      std::cout << "GLERROR: " << error << std::endl;
   }
   viewer->bufferSwap();
 }
@@ -151,9 +137,9 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
     glGenBuffers(3,render.buffs);
 
     glBindVertexArray(render.vao);
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(Hale::vertAttrIndxXYZ);
+    glEnableVertexAttribArray(Hale::vertAttrIndxNorm);
+    glEnableVertexAttribArray(Hale::vertAttrIndxRGBA);
   }
 
   //Verts
@@ -164,7 +150,7 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
   else//No change in number of vertices
     glBufferSubData(GL_ARRAY_BUFFER, 0,
 		    lpd->xyzwNum*sizeof(float)*4,lpd->xyzw);
-  glVertexAttribPointer(0, 4, GL_FLOAT,GL_FALSE,0, 0);
+  glVertexAttribPointer(Hale::vertAttrIndxXYZ, 4, GL_FLOAT,GL_FALSE,0, 0);
 
   //Norms
   glBindBuffer(GL_ARRAY_BUFFER, render.buffs[1]);
@@ -174,7 +160,7 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
   else
     glBufferSubData(GL_ARRAY_BUFFER, 0,
 		    lpd->normNum*sizeof(float)*3,lpd->norm);
-  glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE,0, 0);
+  glVertexAttribPointer(Hale::vertAttrIndxNorm, 3, GL_FLOAT,GL_FALSE,0, 0);
 
   //Colors
   glBindBuffer(GL_ARRAY_BUFFER, render.buffs[2]);
@@ -184,7 +170,7 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
   else
     glBufferSubData(GL_ARRAY_BUFFER, 0,
 		    lpd->rgbaNum*sizeof(char)*4,lpd->rgba);
-  glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+  glVertexAttribPointer(Hale::vertAttrIndxRGBA, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
 
   if(buffer_new){
     //Indices
@@ -194,29 +180,6 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
 		 lpd->indxNum * sizeof(unsigned int),
 		 lpd->indx, GL_DYNAMIC_DRAW);
   }
-}
-
-/*Loads and enables the vertex and fragment shaders. Acquires uniforms
- * for the transformation matricies/
- */
-void enable_shaders(const char* vshFile, const char* fshFile){
-  //Initialize the shaders
-  render.shader = new ShaderProgram();
-
-  //Set up the shader
-  render.shader->vertexShader(vshFile);
-  render.shader->fragmentShader(fshFile);
-
-  glBindAttribLocation(render.shader->progId,0, "position");
-  glBindAttribLocation(render.shader->progId,1, "norm");
-  glBindAttribLocation(render.shader->progId,2, "color");
-
-  glLinkProgram(render.shader->progId);
-  glUseProgram(render.shader->progId);
-
-  render.uniforms[0] = render.shader->UniformLocation("proj");
-  render.uniforms[1] = render.shader->UniformLocation("view");
-  render.uniforms[3] = render.shader->UniformLocation("light_dir");
 }
 
 int
@@ -265,15 +228,27 @@ main(int argc, const char **argv) {
     return 1;
   }
 
-  Hale::Viewer *viewer = new Hale::Viewer(width, height, "Bingo");
-  viewer->camera.init(glm::vec3(8.0f,0.0f,0.0f),
-                      glm::vec3(0.0f,0.0f,0.0f),
-                      glm::vec3(0.0f, 1.0f, 0.0f),
-                      25, 1.33333, -2, 2, false);
-  viewer->refreshCB((Hale::ViewerRefresher)render_poly);
-  viewer->refreshData(viewer);
+  Hale::Viewer viewer(width, height, "Bingo");
+  viewer.camera.init(glm::vec3(8.0f,0.0f,0.0f),
+                     glm::vec3(0.0f,0.0f,0.0f),
+                     glm::vec3(0.0f, 1.0f, 0.0f),
+                     25, 1.33333, -2, 2, false);
+  viewer.refreshCB((Hale::ViewerRefresher)render_poly);
+  /* using this pointer as the data for the refresh
+     callback is a little silly, but we may want this
+     ability for something better later */
+  viewer.refreshData(&viewer);
 
-  enable_shaders("glkhhdemo.vsh", "glkdemo.fsh");
+  Hale::Program program("glsl/demo_v.glsl", "glsl/demo_f.glsl");
+  program.compile();
+  program.bind(Hale::vertAttrIndxXYZ, "position");
+  program.bind(Hale::vertAttrIndxNorm, "norm");
+  program.bind(Hale::vertAttrIndxRGBA, "color");
+  program.link();
+  render.uniforms[0] = program.uniformLocation("proj");
+  render.uniforms[1] = program.uniformLocation("view");
+  render.uniforms[3] = program.uniformLocation("light_dir");
+  program.use();
 
   poly = generate_spiral(lpd_alpha, lpd_beta, lpd_theta, lpd_phi);
   buffer_data(poly,true);
@@ -283,15 +258,16 @@ main(int argc, const char **argv) {
 
   glClearColor(0.13f, 0.16f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
+  // glEnable(GL_BLEND);
+  // glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 
-  render_poly(viewer);
+  render_poly(&viewer);
   while(!Hale::finishing){
     glfwWaitEvents();
-    render_poly(viewer);
+    render_poly(&viewer);
   }
 
   /* clean exit; all okay */
-  delete viewer;
   airMopOkay(mop);
   return 0;
 }
