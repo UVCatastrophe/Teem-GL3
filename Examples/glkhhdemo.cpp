@@ -31,9 +31,11 @@ limnPolyData *poly;
 struct render_info {
   GLuint vao = -1;
   GLuint buffs[3];
-  GLuint uniforms[4];
   GLuint elms;
 } render;
+
+// global as short-term hack
+Hale::Program *program = NULL;
 
 glm::vec3 light_dir = glm::normalize(glm::vec3(1.0f,1.0f,3.0f));
 
@@ -87,12 +89,10 @@ void render_poly(Hale::Viewer *viewer){
   static const std::string me="render_poly";
   //fprintf(stderr, "%s: hi\n", me);
 
-  //Transformation Matrix Uniforms
-  glUniformMatrix4fv(render.uniforms[0],1,false,viewer->camera.projectPtr());
-  glUniformMatrix4fv(render.uniforms[1],1,false,viewer->camera.viewPtr());
+  program->uniform("proj", viewer->camera.project());
+  program->uniform("view", viewer->camera.view());
+  program->uniform("light_dir", light_dir);
 
-  //Light Direction Uniforms
-  glUniform3fv(render.uniforms[3],1,glm::value_ptr(light_dir));
   /* ? needed with every render call ? */
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.elms);
 
@@ -222,17 +222,13 @@ main(int argc, const char **argv) {
      ability for something better later */
   viewer.refreshData(&viewer);
 
-  Hale::Program program("glsl/demo_v.glsl", "glsl/demo_f.glsl");
-  program.compile();
-  program.bindAttribute(Hale::vertAttrIndxXYZ, "position");
-  program.bindAttribute(Hale::vertAttrIndxNorm, "norm");
-  program.bindAttribute(Hale::vertAttrIndxRGBA, "color");
-  program.link();
-  program.use();
-
-  render.uniforms[0] = program.uniformLocation("proj");
-  render.uniforms[1] = program.uniformLocation("view");
-  render.uniforms[3] = program.uniformLocation("light_dir");
+  program = new Hale::Program("glsl/demo_v.glsl", "glsl/demo_f.glsl");
+  program->compile();
+  program->bindAttribute(Hale::vertAttrIndxXYZ, "position");
+  program->bindAttribute(Hale::vertAttrIndxNorm, "norm");
+  program->bindAttribute(Hale::vertAttrIndxRGBA, "color");
+  program->link();
+  program->use();
 
   poly = generate_spiral(lpd_alpha, lpd_beta, lpd_theta, lpd_phi);
   buffer_data(poly,true);
