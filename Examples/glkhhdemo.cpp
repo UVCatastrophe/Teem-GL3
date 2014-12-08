@@ -10,18 +10,10 @@
 
 #include <GLFW/glfw3.h>
 
-#include <teem/air.h>
-#include <teem/biff.h>
-#include <teem/nrrd.h>
-#include <teem/limn.h>
-
 #include <Hale.h>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-#include <glm/gtx/string_cast.hpp>
 
 /* Dimensions of the screen*/
 double height = 480;
@@ -44,11 +36,6 @@ struct render_info {
 } render;
 
 glm::vec3 light_dir = glm::normalize(glm::vec3(1.0f,1.0f,3.0f));
-
-/* -------- Prototypes ------------------------- */
-void buffer_data(limnPolyData *lpd, bool buffer_new);
-limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
-			      unsigned int phiRes);
 
 /*
 ** Generates a spiral using limnPolyDataSpiralSuperquadratic and returns
@@ -100,18 +87,19 @@ void render_poly(Hale::Viewer *viewer){
   static const std::string me="render_poly";
   //fprintf(stderr, "%s: hi\n", me);
 
-  //Transformaiton Matrix Uniforms
+  //Transformation Matrix Uniforms
   glUniformMatrix4fv(render.uniforms[0],1,false,viewer->camera.projectPtr());
   glUniformMatrix4fv(render.uniforms[1],1,false,viewer->camera.viewPtr());
 
   //Light Direction Uniforms
   glUniform3fv(render.uniforms[3],1,glm::value_ptr(light_dir));
+  /* ? needed with every render call ? */
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.elms);
 
   glClear(GL_DEPTH_BUFFER_BIT);
   glClear(GL_COLOR_BUFFER_BIT);
   int offset = 0;
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.elms);
   //Render all specified primatives
   for(int i = 0; i < poly->primNum; i++){
     GLuint prim = Hale::limnToGLPrim(poly->type[i]);
@@ -222,12 +210,7 @@ main(int argc, const char **argv) {
   lpd_theta = thetaRes;
   lpd_phi = phiRes;
 
-  if (Hale::init()) {
-    fprintf(stderr, "%s: Hale::init() failed\n", me);
-    airMopError(mop);
-    return 1;
-  }
-
+  Hale::init();
   Hale::Viewer viewer(width, height, "Bingo");
   viewer.camera.init(glm::vec3(8.0f,0.0f,0.0f),
                      glm::vec3(0.0f,0.0f,0.0f),
