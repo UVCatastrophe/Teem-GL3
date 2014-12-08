@@ -85,9 +85,9 @@ glm::mat4 model = glm::mat4();
 glm::vec3 light_dir = glm::vec3(1.0f,0.0f,0.0f);
 
 /* -------- Prototypes -------------------------*/
-void buffer_data(limnPolyData *lpd, bool buffer_new);
-limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
-			      unsigned int phiRes);
+void buffer_data(bool buffer_new);
+void generate_spiral(float A, float B,unsigned int thetaRes,
+                     unsigned int phiRes);
 
 
 /*---------------------Function Defentions----------------*/
@@ -136,15 +136,14 @@ void TWCB_Spiral_Set(const void *value, void *clientData){
     genStart = airTime();
 #endif
 
-  limnPolyData *lpd = generate_spiral(lpd_alpha,lpd_beta,
-				      lpd_theta,lpd_phi);
+    generate_spiral(lpd_alpha,lpd_beta, lpd_theta,lpd_phi);
 
 #if USE_TIME
      genTime = airTime();
      buffStart = airTime();
 #endif
 
-  buffer_data(lpd,true);
+  buffer_data(true);
 
 #if USE_TIME
     buffTime = airTime();
@@ -158,14 +157,11 @@ void TWCB_Spiral_Set(const void *value, void *clientData){
     if(clientData == &lpd_beta){
       std::cout << "Without Reallocation: ";
       buffStart = airTime();
-      buffer_data(lpd,false);
+      buffer_data(false);
       buffTime = airTime();
       std::cout << buffTime-buffStart << std::endl;
     }
 #endif
-
-  limnPolyDataNix(poly);
-  poly = lpd;
 }
 
 void TWCB_Spiral_Get(void *value, void *clientData){
@@ -380,8 +376,8 @@ GLuint get_prim(unsigned char type){
 /*Generates a spiral using limnPolyDataSpiralSuperquadratic and returns
 * a pointer to the newly created object.
 */
-limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
-			      unsigned int phiRes){
+void generate_spiral(float A, float B,unsigned int thetaRes,
+                     unsigned int phiRes){
   airArray *mop;
 
   char *err;
@@ -389,7 +385,6 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
   float *parm;
   limnPolyData *lpd;
 
-  lpd = limnPolyDataNew();
   /* this controls which arrays of per-vertex info will be allocated
      inside the limnPolyData */
   flag = ((1 << limnPolyDataInfoRGBA)
@@ -397,29 +392,28 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
 
   /* this creates the polydata, re-using arrays where possible
      and allocating them when needed */
-  if (limnPolyDataSpiralSuperquadric(lpd, flag,
+  if (limnPolyDataSpiralSuperquadric(poly, flag,
 				     A, B, /* alpha, beta */
 				     thetaRes, phiRes)) {
     airMopAdd(mop, err = biffGetDone(LIMN), airFree, airMopAlways);
     fprintf(stderr, "trouble making polydata:\n%s", err);
     airMopError(mop);
-    return NULL;
+    exit(1);
   }
 
   /* do something with per-vertex data to make it visually more interesting:
      the R,G,B colors increase with X, Y, and Z, respectively */
   unsigned int vertIdx;
-  for (vertIdx=0; vertIdx<lpd->xyzwNum; vertIdx++) {
-    float *xyzw = lpd->xyzw + 4*vertIdx;
-    unsigned char *rgba = lpd->rgba + 4*vertIdx;
+  for (vertIdx=0; vertIdx<poly->xyzwNum; vertIdx++) {
+    float *xyzw = poly->xyzw + 4*vertIdx;
+    unsigned char *rgba = poly->rgba + 4*vertIdx;
     rgba[0] = AIR_CAST(unsigned char, AIR_AFFINE(-1, xyzw[0], 1, 40, 255));
     rgba[1] = AIR_CAST(unsigned char, AIR_AFFINE(-1, xyzw[1], 1, 40, 255));
     rgba[2] = AIR_CAST(unsigned char, AIR_AFFINE(-1, xyzw[2], 1, 40, 255));
 
     rgba[3] = 255;
   }
-
-  return lpd;
+  return;
 }
 
 //Render the limnPolyData given in the global variable "poly"
@@ -457,7 +451,7 @@ void render_poly(){
  * Buffer_new is set to true if the number or connectiviity of the vertices
  * has changed since the last buffering.
  */
-void buffer_data(limnPolyData *lpd, bool buffer_new){
+void buffer_data(bool buffer_new){
 
   //First Pass
   if(render.vao == -1){
@@ -474,31 +468,31 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
   //Verts
   glBindBuffer(GL_ARRAY_BUFFER, render.buffs[0]);
   if(buffer_new)
-    glBufferData(GL_ARRAY_BUFFER, lpd->xyzwNum*sizeof(float)*4,
-		 lpd->xyzw, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, poly->xyzwNum*sizeof(float)*4,
+		 poly->xyzw, GL_DYNAMIC_DRAW);
   else//No change in number of vertices
     glBufferSubData(GL_ARRAY_BUFFER, 0,
-		    lpd->xyzwNum*sizeof(float)*4,lpd->xyzw);
+                    poly->xyzwNum*sizeof(float)*4, poly->xyzw);
   glVertexAttribPointer(0, 4, GL_FLOAT,GL_FALSE,0, 0);
 
   //Norms
   glBindBuffer(GL_ARRAY_BUFFER, render.buffs[1]);
   if(buffer_new)
-    glBufferData(GL_ARRAY_BUFFER, lpd->normNum*sizeof(float)*3,
-		 lpd->norm, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, poly->normNum*sizeof(float)*3,
+		 poly->norm, GL_DYNAMIC_DRAW);
   else
     glBufferSubData(GL_ARRAY_BUFFER, 0,
-		    lpd->normNum*sizeof(float)*3,lpd->norm);
+		    poly->normNum*sizeof(float)*3,poly->norm);
   glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE,0, 0);
 
   //Colors
   glBindBuffer(GL_ARRAY_BUFFER, render.buffs[2]);
   if(buffer_new)
-    glBufferData(GL_ARRAY_BUFFER, lpd->rgbaNum*sizeof(char)*4,
-		 lpd->rgba, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, poly->rgbaNum*sizeof(char)*4,
+		 poly->rgba, GL_DYNAMIC_DRAW);
   else
     glBufferSubData(GL_ARRAY_BUFFER, 0,
-		    lpd->rgbaNum*sizeof(char)*4,lpd->rgba);
+		    poly->rgbaNum*sizeof(char)*4,poly->rgba);
   glVertexAttribPointer(2, 4, GL_BYTE,GL_FALSE,0, 0);
 
   if(buffer_new){
@@ -506,8 +500,8 @@ void buffer_data(limnPolyData *lpd, bool buffer_new){
     glGenBuffers(1, &(render.elms));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.elms);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-		 lpd->indxNum * sizeof(unsigned int),
-		 lpd->indx, GL_DYNAMIC_DRAW);
+		 poly->indxNum * sizeof(unsigned int),
+		 poly->indx, GL_DYNAMIC_DRAW);
   }
 }
 
@@ -588,6 +582,7 @@ void init_ATB(){
 
 int main(int argc, const char **argv) {
 
+  poly = limnPolyDataNew();
   glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // Use OpenGL Core v3.2
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -607,8 +602,8 @@ int main(int argc, const char **argv) {
 
   enable_shaders("polydemo.vsh","polydemo.fsh");
 
-  poly = generate_spiral(lpd_alpha,lpd_beta, lpd_theta, lpd_phi);
-  buffer_data(poly,true);
+  generate_spiral(lpd_alpha,lpd_beta, lpd_theta, lpd_phi);
+  buffer_data(true);
 
   glBindVertexArray(render.vao);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render.elms);
