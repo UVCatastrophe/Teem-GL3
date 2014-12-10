@@ -14,7 +14,7 @@ else
 OS_LIBS = -lGL -lX11 -lXxf86vm -lXrandr -lpthread -lXi
 endif
 
-LIBS = -lglfw3 -lhale -lteem -lAntTweakBar
+LIBS = -lglfw3 -lAntTweakBar -lhale -lteem -lpng -lz
 
 RPATH = -Wl,-rpath,$(TEEM)/lib -Wl,-rpath,$(ATB)/lib
 IPATH = -I$(HALE)/include -I$(TEEM)/include -I$(GLM) -I$(ATB)/include/
