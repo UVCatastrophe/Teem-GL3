@@ -1,19 +1,9 @@
 #include <iostream>
 
-#define GLM_FORCE_RADIANS
-
-#if defined(__APPLE_CC__)
-#define GLFW_INCLUDE_GLCOREARB
-#else
-#define GL_GLEXT_PROTOTYPES
-#endif
-
-#include <GLFW/glfw3.h>
 
 #include <Hale.h>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 /* Dimensions of the screen*/
 double height = 480;
