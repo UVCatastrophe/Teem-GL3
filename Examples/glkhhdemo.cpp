@@ -1,6 +1,5 @@
 #include <iostream>
 
-
 #include <Hale.h>
 
 #include <glm/glm.hpp>
@@ -211,6 +210,7 @@ main(int argc, const char **argv) {
      callback is a little silly, but we may want this
      ability for something better later */
   viewer.refreshData(&viewer);
+  viewer.current();
 
   program = new Hale::Program("glsl/demo_v.glsl", "glsl/demo_f.glsl");
   program->compile();
