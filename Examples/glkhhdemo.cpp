@@ -4,26 +4,11 @@
 
 #include <glm/glm.hpp>
 
-/* Dimensions of the screen*/
-double height = 480;
-double width = 640;
-
 /* The parameters for call to generate_spiral */
 float lpd_alpha = 0.2;
 float lpd_beta = 0.2;
 float lpd_theta = 50;
 float lpd_phi = 50;
-
-// Poly data for the spiral
-limnPolyData *poly;
-
-// global as short-term hack
-Hale::Program *program = NULL;
-
-// also global as short-term hack
-Hale::Polydata *hply = NULL;
-
-glm::vec3 light_dir = glm::normalize(glm::vec3(-1.0f,1.0f,3.0f));
 
 /*
 ** Generates a spiral using limnPolyDataSpiralSuperquadratic and returns
@@ -40,8 +25,8 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
   lpd = limnPolyDataNew();
   /* this controls which arrays of per-vertex info will be allocated
      inside the limnPolyData */
-  flag = ((1 << limnPolyDataInfoRGBA)
-          | (1 << limnPolyDataInfoNorm));
+  //flag = ((1 << limnPolyDataInfoRGBA) | (1 << limnPolyDataInfoNorm));
+  flag = (1 << limnPolyDataInfoNorm);
 
   /* this creates the polydata, re-using arrays where possible
      and allocating them when needed */
@@ -54,32 +39,28 @@ limnPolyData *generate_spiral(float A, float B,unsigned int thetaRes,
     return NULL;
   }
 
-  /* do something with per-vertex data to make it visually more interesting:
-     the R,G,B colors increase with X, Y, and Z, respectively */
-  unsigned int vertIdx;
-  for (vertIdx=0; vertIdx<lpd->xyzwNum; vertIdx++) {
-    float *xyzw = lpd->xyzw + 4*vertIdx;
-    unsigned char *rgba = lpd->rgba + 4*vertIdx;
-    rgba[0] = AIR_CAST(unsigned char, AIR_AFFINE(-1, xyzw[0], 1, 0, 255));
-    rgba[1] = AIR_CAST(unsigned char, AIR_AFFINE(-1, xyzw[1], 1, 0, 255));
-    rgba[2] = AIR_CAST(unsigned char, AIR_AFFINE(-1, xyzw[2], 1, 0, 255));
-    rgba[3] = 255;
+  if (0) {
+    /* do something with per-vertex data to make it visually more interesting:
+       the R,G,B colors increase with X, Y, and Z, respectively */
+    unsigned int vertIdx;
+    for (vertIdx=0; vertIdx<lpd->xyzwNum; vertIdx++) {
+      float *xyzw = lpd->xyzw + 4*vertIdx;
+      unsigned char *rgba = lpd->rgba + 4*vertIdx;
+      rgba[0] = AIR_CAST(unsigned char, AIR_AFFINE(-1, xyzw[0], 1, 0, 255));
+      rgba[1] = AIR_CAST(unsigned char, AIR_AFFINE(-1, xyzw[1], 1, 0, 255));
+      rgba[2] = AIR_CAST(unsigned char, AIR_AFFINE(-1, xyzw[2], 1, 0, 255));
+      rgba[3] = 255;
+    }
   }
 
   return lpd;
 }
 
-//Render the limnPolyData given in the global variable "poly"
 void render(Hale::Viewer *viewer){
-  static const std::string me="render";
-  //fprintf(stderr, "%s: hi\n", me);
+  Hale::uniform("proj", viewer->camera.project());
+  Hale::uniform("view", viewer->camera.view());
 
-  program->uniform("proj", viewer->camera.project());
-  program->uniform("view", viewer->camera.view());
-  program->uniform("light_dir", light_dir);
-
-  hply->draw();
-
+  viewer->draw();
   viewer->bufferSwap();
 }
 
@@ -124,7 +105,13 @@ main(int argc, const char **argv) {
   lpd_phi = phiRes;
 
   Hale::init();
-  Hale::Viewer viewer(width, height, "Bingo");
+
+  /* first, create empty scene */
+  Hale::Scene scene;
+
+  /* then create viewer (in order to create the OpenGL context) */
+  Hale::Viewer viewer(640, 480, "Bingo", &scene);
+  viewer.lightDir(glm::vec3(-1.0f, 1.0f, 3.0f));
   viewer.camera.init(glm::vec3(8.0f,0.0f,0.0f),
                      glm::vec3(0.0f,0.0f,0.0f),
                      glm::vec3(0.0f, 1.0f, 0.0f),
@@ -136,26 +123,31 @@ main(int argc, const char **argv) {
   viewer.refreshData(&viewer);
   viewer.current();
 
-  program = new Hale::Program("glsl/demo_v.glsl", "glsl/demo_f.glsl");
-  program->compile();
-  program->bindAttribute(Hale::vertAttrIdxXYZW, "position");
-  program->bindAttribute(Hale::vertAttrIdxNorm, "norm");
-  program->bindAttribute(Hale::vertAttrIdxRGBA, "color");
-  program->link();
-  program->use();
+  /* then create geometry, and add it to scene */
+  limnPolyData *poly = generate_spiral(lpd_alpha, lpd_beta, lpd_theta, lpd_phi);
+  Hale::Polydata hply(poly, true); // hply now owns poly
+  hply.model(glm::mat4(200.2f, 0.0f, 0.0f, 0.0f,
+                       0.0f, 20.2f, 0.0f, 0.0f,
+                       0.0f, 0.0f, 200.0f, 0.0f,
+                       200.0f, 0.0f, 0.0f, 1.0f));
+  hply.colorSolid(1, 1, 0);
+  scene.add(&hply);
 
-  poly = generate_spiral(lpd_alpha, lpd_beta, lpd_theta, lpd_phi);
-  hply = new Hale::Polydata(poly);
+  Hale::Polydata hply2(generate_spiral(1.0, 1.0, 5, 5), true); // hply now owns poly
+  hply2.colorSolid(1, 1, 1);
+  scene.add(&hply2);
 
-  glClearColor(0.13f, 0.16f, 0.2f, 1.0f);
-  glEnable(GL_DEPTH_TEST);
-  //glEnable(GL_BLEND);
-  //glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+  Hale::Program program(Hale::preprogramAmbDiffSolid);
+  program.compile();
+  program.bindAttribute(Hale::vertAttrIdxXYZW, "position");
+  program.bindAttribute(Hale::vertAttrIdxNorm, "norm");
+  program.bindAttribute(Hale::vertAttrIdxRGBA, "color");
+  program.link();
+  program.use();
 
+  scene.drawInit();
   while(!Hale::finishing){
     glfwWaitEvents();
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glClear(GL_COLOR_BUFFER_BIT);
     render(&viewer);
   }
 
